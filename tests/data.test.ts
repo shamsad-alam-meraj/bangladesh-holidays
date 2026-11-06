@@ -14,7 +14,7 @@ import {
   getWeekdayName,
   validateHolidayDataset,
 } from "../src";
-import government2027 from "../src/data/government/2027.json";
+import government2027 from "../data/government/2027.json";
 
 const dataset = getDataset("government", 2027)!;
 const byId = new Map(dataset.holidays.map((holiday) => [holiday.id, holiday]));

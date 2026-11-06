@@ -8,7 +8,7 @@ import {
   getHolidays,
   type HolidayDatasetInput,
 } from "../src";
-import government2027 from "../src/data/government/2027.json";
+import government2027 from "../data/government/2027.json";
 
 describe("compareHolidayCalendars", () => {
   it("lists dates whose status differs", () => {

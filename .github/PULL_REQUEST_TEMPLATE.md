@@ -6,7 +6,7 @@
 
 - [ ] `fix` — bug fix
 - [ ] `feat` — new feature
-- [ ] `data` — holiday data change
+- [ ] `fix(data)` / `feat(data)` — holiday data correction / new year or calendar
 - [ ] `docs` / `test` / `refactor` / `chore` / `ci`
 - [ ] Breaking change
 
@@ -21,5 +21,5 @@
 
 - [ ] `npm run release:check` passes
 - [ ] Tests cover the change
-- [ ] `CHANGELOG.md` updated under **Unreleased**
+- [ ] PR title follows Conventional Commits (it becomes the changelog entry)
 - [ ] Docs updated if behavior or API changed

@@ -41,20 +41,24 @@
         "default": "./dist/index.cjs"
       }
     },
-    "./data/government/*.json": "./src/data/government/*.json",
-    "./data/calendars.json": "./src/data/calendars.json",
+    "./data/government/*.json": "./data/government/*.json",
+    "./data/calendars.json": "./data/calendars.json",
     "./schema/holiday-dataset.schema.json": "./schema/holiday-dataset.schema.json",
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
-    "src/data/**/*.json",
+    "data",
     "schema",
     "CHANGELOG.md"
   ],
   "sideEffects": false,
   "engines": {
     "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsup",
@@ -67,16 +71,19 @@
     "typecheck": "tsc --noEmit",
     "examples": "node scripts/run-examples.mjs",
     "smoke": "node scripts/smoke-test.mjs",
-    "release:check": "npm run typecheck && npm run lint && npm run test:coverage && npm run build && npm run examples && npm run smoke",
-    "prepublishOnly": "npm run release:check"
+    "release:check": "npm run typecheck && npm run lint && npm run test:coverage && npm run build && npm run lint:package && npm run examples && npm run smoke",
+    "prepublishOnly": "npm run release:check",
+    "lint:package": "publint --strict && attw --pack ."
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.0.0",
     "@vitest/coverage-v8": "^5.1.0",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.10",
+    "publint": "^0.3.25",
     "tsup": "^8.5.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.72.1",

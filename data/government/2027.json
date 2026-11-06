@@ -1,5 +1,5 @@
 {
-  "$schema": "../../../schema/holiday-dataset.schema.json",
+  "$schema": "../../schema/holiday-dataset.schema.json",
   "schemaVersion": 1,
   "calendar": "government",
   "year": 2027,

@@ -35,7 +35,7 @@ for (const required of [
   "dist/index.cjs",
   "dist/index.d.ts",
   "dist/index.d.cts",
-  "src/data/government/2027.json",
+  "data/government/2027.json",
   "schema/holiday-dataset.schema.json",
   "LICENSE",
   "README.md",
