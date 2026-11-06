@@ -8,6 +8,11 @@ updates:
       dev-dependencies:
         dependency-type: development
         update-types: [minor, patch]
+    ignore:
+      # typescript-eslint supports TypeScript < 6.1 only; TypeScript 7 breaks `npm run lint`.
+      # Remove this rule once typescript-eslint supports the new major version.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: chore
       include: scope
