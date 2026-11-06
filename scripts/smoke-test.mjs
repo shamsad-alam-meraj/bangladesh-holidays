@@ -113,6 +113,23 @@ run(
 run(`${tsc} ${common} --module esnext --moduleResolution bundler bundler-consumer.ts`, consumer);
 console.log("  nodenext (ESM + CJS) and bundler resolution ok");
 
+step("CLI (installed bin)");
+if (!files.includes("dist/cli.js")) throw new Error("Tarball is missing dist/cli.js");
+const cliVersion = run("npm exec --no -- bangladesh-holidays --version", consumer).trim();
+const pkgVersion = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version;
+if (cliVersion !== pkgVersion)
+  throw new Error(`CLI --version printed "${cliVersion}", expected ${pkgVersion}`);
+const cliJson = JSON.parse(
+  run(`"${process.execPath}" node_modules/bangladesh-holidays/dist/cli.js 2027 --format json`, consumer),
+);
+if (cliJson.count !== 23) throw new Error(`CLI listed ${cliJson.count} holidays for 2027, expected 23`);
+const cliAdd = run(
+  `"${process.execPath}" node_modules/bangladesh-holidays/dist/cli.js add 2027-03-04 1`,
+  consumer,
+);
+if (!cliAdd.startsWith("2027-03-14")) throw new Error(`CLI add printed "${cliAdd.trim()}"`);
+console.log(`  ok — bangladesh-holidays ${cliVersion}`);
+
 step("browser bundle");
 const { build } = await import("esbuild");
 const bundle = await build({

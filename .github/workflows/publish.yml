@@ -2,10 +2,10 @@
 #
 # 1. Every push to main runs release-please, which keeps a "release PR" up to date from
 #    Conventional Commits (version bump in package.json + src/version.ts, CHANGELOG entry).
-# 2. Merging that PR creates the vX.Y.Z tag and GitHub release, and the publish job stages the
-#    package on npm via trusted publishing (OIDC, no token) with provenance.
-# 3. A maintainer approves the staged version with 2FA (npm stage approve <id>, or on
-#    npmjs.com), which makes it public.
+# 2. Merging that PR creates the vX.Y.Z tag and GitHub release, and the publish job runs every
+#    check and publishes to npm via trusted publishing (OIDC, no token) with provenance.
+# 3. Optional: set the repository variable NPM_PUBLISH_MODE=stage to stage releases instead, so
+#    a maintainer must approve each version with 2FA (npm stage approve <id>).
 #
 # Recovery: if staging fails after a tag was created, fix the cause (see RELEASING.md →
 # Troubleshooting) and either "Re-run failed jobs" or run this workflow manually on main with
@@ -55,7 +55,7 @@ jobs:
           manifest-file: .release-please-manifest.json
 
   publish:
-    name: Stage on npm
+    name: Publish to npm
     needs: release-please
     # !cancelled(): a manual run with a tag still publishes even if release-please failed.
     if: >-
@@ -122,34 +122,55 @@ jobs:
         if: steps.preflight.outputs.skip != 'true'
         run: npm run release:check
 
-      - name: Stage release on npm
+      - name: Publish to npm
         if: steps.preflight.outputs.skip != 'true'
+        env:
+          # Repository variable NPM_PUBLISH_MODE: "direct" (default) publishes immediately;
+          # "stage" stages the version for a maintainer to approve with 2FA.
+          PUBLISH_MODE: ${{ vars.NPM_PUBLISH_MODE || 'direct' }}
+          DIST_TAG: ${{ steps.preflight.outputs.dist_tag }}
         # Scripts already ran above; --ignore-scripts avoids running release:check twice.
-        run: npm stage publish --provenance --ignore-scripts --tag "${{ steps.preflight.outputs.dist_tag }}"
+        run: |
+          if [ "$PUBLISH_MODE" = "stage" ]; then
+            npm stage publish --provenance --ignore-scripts --tag "$DIST_TAG"
+          else
+            npm publish --provenance --access public --ignore-scripts --tag "$DIST_TAG"
+          fi
 
       - name: Summary
         if: steps.preflight.outputs.skip != 'true'
+        env:
+          PUBLISH_MODE: ${{ vars.NPM_PUBLISH_MODE || 'direct' }}
+          VERSION: ${{ steps.preflight.outputs.version }}
         run: |
           {
-            echo "### bangladesh-holidays ${RELEASE_TAG} staged on npm"
-            echo
-            echo "Approve it with 2FA to make it public:"
-            echo
-            echo '```sh'
-            echo "npm stage list bangladesh-holidays"
-            echo "npm stage approve <stage-id>"
-            echo '```'
+            if [ "$PUBLISH_MODE" = "stage" ]; then
+              echo "### bangladesh-holidays ${VERSION} staged on npm"
+              echo
+              echo "Approve it with 2FA to make it public (wait until \`npm stage list\` shows status \`staged\`):"
+              echo
+              echo '```sh'
+              echo "npm stage list bangladesh-holidays"
+              echo "npm stage approve <stage-id>"
+              echo '```'
+            else
+              echo "### bangladesh-holidays ${VERSION} published to npm"
+              echo
+              echo "https://www.npmjs.com/package/bangladesh-holidays/v/${VERSION}"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Explain authentication failures
+      - name: Explain publishing failures
         if: failure()
+        env:
+          PUBLISH_MODE: ${{ vars.NPM_PUBLISH_MODE || 'direct' }}
         run: |
           {
-            echo "### Staging failed"
+            echo "### Publishing failed"
             echo
-            echo "If the log shows **E401 / Unable to authenticate**, npm did not match this run to a trusted publisher."
-            echo "Check with \`npm trust list bangladesh-holidays\` that an entry has:"
-            echo "repository \`shamsad-alam-meraj/bangladesh-holidays\`, file \`publish.yml\`, environment \`npm\`, permission \`stage publish\`."
+            echo "If the log shows **E401 / E403 / Unable to authenticate**, npm did not accept this run as a trusted publisher."
+            echo "\`npm trust list bangladesh-holidays\` must show an entry with repository \`shamsad-alam-meraj/bangladesh-holidays\`,"
+            echo "file \`publish.yml\`, environment \`npm\`, and permission **\`publish\`** (mode: \`${PUBLISH_MODE}\`; staged mode needs \`stage publish\`)."
             echo
             echo "After fixing, use **Re-run failed jobs**, or run this workflow on main with tag \`${RELEASE_TAG}\`."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -34,3 +34,6 @@ Thumbs.db
 # Packaging smoke tests
 .smoke/
 *.tgz
+
+# Generated calendar feeds (GitHub Pages)
+site/

@@ -30,19 +30,21 @@ public until a maintainer approves it with 2FA.
    - `data/calendars.json` coverage is current, including `checkedDate`. Re-check
      [bb.org.bd](https://www.bb.org.bd) for Bangladesh Bank lists.
 4. Merging the release PR creates the `vX.Y.Z` tag and GitHub release. The workflow's
-   **Stage on npm** job then runs every check (`npm run release:check`) and stages the package
-   with `npm stage publish --provenance`.
-5. **Approve the staged version** (requires 2FA), either on npmjs.com under the package's staged
-   versions, or from a terminal:
+   **Publish to npm** job then runs every check (`npm run release:check`) and publishes with
+   `npm publish --provenance`. Nothing else is needed.
+5. Verify with `npm view bangladesh-holidays version`. The npm page shows the provenance badge.
 
-   ```sh
-   npm stage list bangladesh-holidays
-   npm stage approve <stage-id>
-   ```
+### Optional: staged publishing (2FA approval per release)
 
-   To discard it instead, run `npm stage reject <stage-id>`.
+Set the repository variable **`NPM_PUBLISH_MODE`** to `stage` (_Settings → Secrets and variables →
+Actions → Variables_). The job then runs `npm stage publish`, and each version waits for approval:
 
-6. Verify with `npm view bangladesh-holidays version`. The npm page shows the provenance badge.
+```sh
+npm stage list bangladesh-holidays      # wait for status "staged" (automated review takes a few minutes)
+npm stage approve <stage-id>            # requires 2FA; or `npm stage reject <stage-id>`
+```
+
+The trusted publisher must allow **stage publish** for this mode.
 
 ## One-time setup
 
@@ -51,29 +53,39 @@ public until a maintainer approves it with 2FA.
    - Repository: `bangladesh-holidays`
    - Workflow filename: `publish.yml`
    - Environment name: `npm`
-   - Leave "publish directly" unchecked, so the publisher can only stage.
+   - Allowed actions: tick **publish directly** (required by the default direct mode). Staged
+     publishing is always allowed.
+
+   Or from a terminal (opens a browser for 2FA):
+
+   ```sh
+   npm trust github bangladesh-holidays --file publish.yml --repository shamsad-alam-meraj/bangladesh-holidays --environment npm --allow-publish --allow-stage-publish
+   ```
+
 2. **npm → package → Settings → Publishing access:** choose _Require two-factor authentication and
    disallow tokens_.
 3. **GitHub → Settings → Environments → New environment `npm`**
    - Deployment branches and tags: _Selected branches and tags_ → add `main`.
-   - Optional: add yourself as a required reviewer for an extra approval gate.
-4. **GitHub → Settings → Actions → General → Workflow permissions:** enable _Allow GitHub Actions to
+   - Optional: add yourself as a required reviewer to approve each publish in GitHub.
+4. **GitHub → Settings → Pages → Source: GitHub Actions** for the calendar feeds
+   (`.github/workflows/pages.yml`). Until then the feeds are built and validated but not deployed.
+5. **GitHub → Settings → Actions → General → Workflow permissions:** enable _Allow GitHub Actions to
    create and approve pull requests_ (release-please needs this to open the release PR).
-5. Optional: CI does not run on release PRs opened with the default token. To get CI checks on
+6. Optional: CI does not run on release PRs opened with the default token. To get CI checks on
    them, add a fine-grained personal access token (Contents + Pull requests: read/write on this
    repository) as the `RELEASE_PLEASE_TOKEN` repository secret.
-6. Recommended: protect `main` (_Settings → Branches_) by requiring pull requests and the CI checks
+7. Recommended: protect `main` (_Settings → Branches_) by requiring pull requests and the CI checks
    to pass.
 
 ## Troubleshooting
 
-| Symptom (in the Publish workflow log)                                | Cause                                                       | Fix                                                                                                                                                                                                                                             |
-| -------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GitHub Actions is not permitted to create or approve pull requests` | Repository setting                                          | Settings → Actions → General → Workflow permissions → tick _Allow GitHub Actions to create and approve pull requests_ → Save (owner account), or add the `RELEASE_PLEASE_TOKEN` secret. Then re-run.                                            |
-| `E401 Unable to authenticate` at "Stage release on npm"              | No trusted publisher matches this run                       | `npm trust list bangladesh-holidays` must show repository `shamsad-alam-meraj/bangladesh-holidays`, file `publish.yml`, environment `npm`, permission `stage publish`. Revoke wrong entries (`npm trust revoke bangladesh-holidays --id <id>`). |
-| `Tag … does not match package.json version`                          | A tag was created by hand                                   | Delete the wrong tag, or release manually (below).                                                                                                                                                                                              |
-| `… is already published on npm — nothing to do`                      | Re-run of a version that is live                            | Nothing to fix.                                                                                                                                                                                                                                 |
-| CI fails on a release commit                                         | Check the failing step locally with `npm run release:check` | Fix with a `fix:` commit; the next release PR picks it up.                                                                                                                                                                                      |
+| Symptom (in the Publish workflow log)                                | Cause                                                                    | Fix                                                                                                                                                                                                                                                                                                 |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GitHub Actions is not permitted to create or approve pull requests` | Repository setting                                                       | Settings → Actions → General → Workflow permissions → tick _Allow GitHub Actions to create and approve pull requests_ → Save (owner account), or add the `RELEASE_PLEASE_TOKEN` secret. Then re-run.                                                                                                |
+| `E401`/`E403` at "Publish to npm"                                    | No trusted publisher matches this run, or it lacks the needed permission | `npm trust list bangladesh-holidays` must show repository `shamsad-alam-meraj/bangladesh-holidays`, file `publish.yml`, environment `npm`, and permission `publish` (or `stage publish` when `NPM_PUBLISH_MODE=stage`). Revoke wrong entries with `npm trust revoke bangladesh-holidays --id <id>`. |
+| `Tag … does not match package.json version`                          | A tag was created by hand                                                | Delete the wrong tag, or release manually (below).                                                                                                                                                                                                                                                  |
+| `… is already published on npm — nothing to do`                      | Re-run of a version that is live                                         | Nothing to fix.                                                                                                                                                                                                                                                                                     |
+| CI fails on a release commit                                         | Check the failing step locally with `npm run release:check`              | Fix with a `fix:` commit; the next release PR picks it up.                                                                                                                                                                                                                                          |
 
 **Retrying a release:** after fixing the cause, either use **Re-run failed jobs** on the failed run,
 or go to **Actions → Publish → Run workflow** on `main` and enter the tag (for example `v1.0.2`).

@@ -21,6 +21,12 @@ console.log(formatBengaliDate("2027-03-26")); // ১২ চৈত্র ১৪�
 console.log(toBengaliDate("2027-04-14").formattedEn); // 1 Boishakh 1434
 console.log(toBanglaDigits(2027)); // ২০২৭
 
+// Weekday and season (ঋতু) — exact in the revised Bangla calendar
+console.log(formatBengaliDate("2027-03-26", { weekday: true, season: true })); // শুক্রবার, ১২ চৈত্র ১৪৩৩ (বসন্তকাল)
+console.log(formatBengaliDate("2027-08-05", { locale: "en", weekday: true, season: true })); // Thursday, 21 Srabon 1434 (Borsha)
+const pohelaBoishakh = toBengaliDate("2027-04-14");
+console.log(`${pohelaBoishakh.weekdayBn}, ${pohelaBoishakh.formattedBn}, ${pohelaBoishakh.seasonBn}কাল`); // বুধবার, ০১ বৈশাখ ১৪৩৪, গ্রীষ্মকাল
+
 const calendar = createHolidayCalendar({ year: 2027, locale: "bn" });
 for (const item of calendar.getHolidays({ month: 12 })) {
   console.log(

@@ -125,3 +125,60 @@ export interface HolidayChangeSet<T> {
   }[];
   readonly unchanged: number;
 }
+
+/** A leave plan: the leave days to take and the break they produce. */
+export interface LeaveSuggestion {
+  /** First day off of the break. */
+  readonly startDate: ISODateString;
+  /** Last day off of the break. */
+  readonly endDate: ISODateString;
+  /** Total consecutive days off, including the leave days. */
+  readonly daysOff: number;
+  /** Business days to take as leave, in order. */
+  readonly leaveDates: readonly ISODateString[];
+  /** Number of leave days (`leaveDates.length`). */
+  readonly leaveDays: number;
+  /** Days off gained per leave day (`daysOff / leaveDays`). */
+  readonly efficiency: number;
+  /** Holidays inside the break. */
+  readonly holidays: readonly Holiday[];
+  /** True if the break reaches into a year for which data is unavailable. */
+  readonly truncated: boolean;
+}
+
+/** One day in a month grid. */
+export interface MonthCalendarDay {
+  readonly date: ISODateString;
+  /** Day of month (1–31). */
+  readonly day: number;
+  readonly weekday: Weekday;
+  /** False for leading/trailing days that belong to the previous/next month. */
+  readonly inMonth: boolean;
+  readonly isWeekend: boolean;
+  /** Holiday details are only filled for days in the month. */
+  readonly holidays: readonly Holiday[];
+  readonly isHoliday: boolean;
+  readonly isHalfDay: boolean;
+  /** `null` for days outside the month. */
+  readonly isBusinessDay: boolean | null;
+  /** Bangla calendar date (e.g. "১২ চৈত্র ১৪৩৩") from 14 April 2019 onward, else `undefined`. */
+  readonly bengaliDate?: string;
+}
+
+/** Month view data for building calendar UIs. */
+export interface MonthCalendar {
+  readonly year: number;
+  readonly month: number;
+  readonly monthName: string;
+  readonly locale: LocaleCode;
+  /** Weekdays in column order, starting with `weekStartsOn`. */
+  readonly weekdays: readonly {
+    readonly weekday: Weekday;
+    readonly name: string;
+    readonly isWeekend: boolean;
+  }[];
+  /** Rows of exactly 7 days. */
+  readonly weeks: readonly (readonly MonthCalendarDay[])[];
+  readonly businessDays: number;
+  readonly holidays: readonly Holiday[];
+}

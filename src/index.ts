@@ -36,6 +36,8 @@ export {
   getWorkingDays,
   getWeekendDays,
   getLongWeekends,
+  suggestLeave,
+  getMonthCalendar,
 } from "./core/api";
 export type { GetHolidaysOptions } from "./core/api";
 
@@ -96,10 +98,12 @@ export {
   getBengaliMonthLengths,
   BENGALI_MONTHS_BN,
   BENGALI_MONTHS_EN,
+  BENGALI_SEASONS_BN,
+  BENGALI_SEASONS_EN,
   BENGALI_CALENDAR_MIN_DATE,
   BENGALI_CALENDAR_MIN_YEAR,
 } from "./localization/bengali-calendar";
-export type { BengaliDate } from "./localization/bengali-calendar";
+export type { BengaliDate, FormatBengaliDateOptions } from "./localization/bengali-calendar";
 
 export { exportHolidays, exportToJson, exportToCsv, exportToIcs, CSV_COLUMNS } from "./exporters";
 

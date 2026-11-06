@@ -127,6 +127,14 @@ export function exportToIcs(holidays: readonly Holiday[], options: IcsExportOpti
     `X-WR-CALNAME:${escapeIcsText(options.calendarName ?? "Bangladesh Holidays")}`,
     "X-WR-TIMEZONE:Asia/Dhaka",
   ];
+  if (options.calendarDescription) lines.push(`X-WR-CALDESC:${escapeIcsText(options.calendarDescription)}`);
+  if (options.refreshIntervalHours !== undefined) {
+    const hours = options.refreshIntervalHours;
+    if (!Number.isInteger(hours) || hours < 1) {
+      throw new RangeError("refreshIntervalHours must be a positive integer");
+    }
+    lines.push(`REFRESH-INTERVAL;VALUE=DURATION:PT${hours}H`, `X-PUBLISHED-TTL:PT${hours}H`);
+  }
   for (const holiday of holidays) {
     lines.push(...eventLines(holiday, options.locale ?? holiday.locale, stamp, options));
   }

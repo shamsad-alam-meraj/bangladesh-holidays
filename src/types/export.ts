@@ -45,6 +45,13 @@ export interface IcsExportOptions extends ExportRangeOptions {
   readonly uidDomain?: string;
   /** Mark events as busy (`OPAQUE`). Default `false` (`TRANSPARENT`). */
   readonly busy?: boolean;
+  /** `X-WR-CALDESC` shown by calendar apps. */
+  readonly calendarDescription?: string;
+  /**
+   * For subscribed feeds: how often clients should re-fetch, in hours
+   * (`REFRESH-INTERVAL` / `X-PUBLISHED-TTL`). Omitted by default.
+   */
+  readonly refreshIntervalHours?: number;
 }
 
 export type ExportOptions = JsonExportOptions | CsvExportOptions | IcsExportOptions;

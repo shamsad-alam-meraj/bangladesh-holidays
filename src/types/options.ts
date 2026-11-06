@@ -194,3 +194,25 @@ export interface UpcomingHolidayOptions {
   /** Only include holidays starting within this many days. */
   readonly withinDays?: number;
 }
+
+export interface LeaveSuggestionOptions {
+  /** Maximum leave days per suggestion. Default `3`. */
+  readonly maxLeaveDays?: number;
+  /** Only suggest breaks of at least this many days off. Default `4`. */
+  readonly minDaysOff?: number;
+  /** Only suggest breaks that contain at least one holiday (not just a weekend). Default `true`. */
+  readonly requireHoliday?: boolean;
+  /** Maximum number of suggestions. Default `10`. */
+  readonly limit?: number;
+  /** Return overlapping alternatives instead of only the best plan per break. Default `false`. */
+  readonly allowOverlap?: boolean;
+}
+
+export interface MonthCalendarOptions {
+  /** First column of the grid (0 = Sunday … 6 = Saturday). Default `0` (Sunday). */
+  readonly weekStartsOn?: Weekday;
+  /** Include the Bangla calendar date for each day. Default `true`. */
+  readonly bengaliDates?: boolean;
+  /** Always return 6 rows (stable layout). Default `false`. */
+  readonly fixedWeeks?: boolean;
+}

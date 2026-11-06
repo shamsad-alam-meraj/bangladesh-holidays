@@ -2,12 +2,14 @@ import { BUILT_IN_CALENDARS, BUILT_IN_COVERAGE, BUILT_IN_DATASETS } from "../dat
 import { exportToCsv } from "../exporters/csv";
 import { exportToIcs } from "../exporters/ics";
 import { exportToJson } from "../exporters/json";
-import { isSupportedLocale } from "../localization";
+import { getMonthName, getWeekdayName, isBanglaLocale, isSupportedLocale } from "../localization";
+import { BENGALI_CALENDAR_MIN_DATE, formatBengaliDate } from "../localization/bengali-calendar";
 import { matchesAttributes, overlapsRange, regionApplies } from "../utils/filtering";
 import { deepFreeze } from "../utils/freeze";
 import { CATEGORY_PRIORITY, compareByPrecedence, compareHolidays, sortHolidays } from "../utils/sorting";
 import {
   addDays,
+  compareISODates,
   assertMonth,
   assertYear,
   daysInMonth,
@@ -33,7 +35,10 @@ import type {
   CategoryStatistics,
   DayInfo,
   HolidayStatistics,
+  LeaveSuggestion,
   LongWeekend,
+  MonthCalendar,
+  MonthCalendarDay,
   MonthSummary,
   ResolvedCalendarOptions,
 } from "../types/calendar";
@@ -56,7 +61,9 @@ import type {
   HolidayDateOverride,
   HolidayPage,
   HolidayQuery,
+  LeaveSuggestionOptions,
   LongWeekendOptions,
+  MonthCalendarOptions,
   RecurringHolidayInput,
   UpcomingHolidayOptions,
   Weekday,
@@ -1060,6 +1067,167 @@ export class HolidayCalendar {
       day = end + 1;
     }
     return Object.freeze(runs);
+  }
+
+  /**
+   * Leave planner: which business days to take off for the longest breaks.
+   *
+   * Every suggestion takes 1…`maxLeaveDays` consecutive business days off and joins
+   * them with the weekends/holidays around them. Results are ranked by efficiency
+   * (days off per leave day), then by length; by default only the best plan per
+   * break is returned. Breaks reach into adjacent years when data is available;
+   * otherwise they are cut at the year boundary and marked `truncated`.
+   */
+  suggestLeave(year?: number, options: LeaveSuggestionOptions = {}): readonly LeaveSuggestion[] {
+    const target = year ?? this.requireYear();
+    assertYear(target);
+    const maxLeave = options.maxLeaveDays ?? 3;
+    const minDaysOff = options.minDaysOff ?? 4;
+    const limit = options.limit ?? 10;
+    const requireHoliday = options.requireHoliday ?? true;
+    if (!Number.isInteger(maxLeave) || maxLeave < 1 || maxLeave > 30) {
+      throw new RangeError("maxLeaveDays must be an integer between 1 and 30");
+    }
+    if (!Number.isInteger(minDaysOff) || minDaysOff < 1)
+      throw new RangeError("minDaysOff must be a positive integer");
+    if (!Number.isInteger(limit) || limit < 0) throw new RangeError("limit must be a non-negative integer");
+    this.index(target);
+    const canRead = (iso: ISODateString): boolean =>
+      this.options.onMissingData === "ignore" || this.hasDataFor(yearOf(iso));
+
+    const firstDay = toDayNumber(startOfYear(target));
+    const lastDay = toDayNumber(endOfYear(target));
+    /** Nearest business day outside the year, or the first unreadable day (truncated). */
+    const boundary = (from: number, step: 1 | -1): { day: number; truncated: boolean } => {
+      for (let day = from, guard = 0; guard < 400; day += step, guard++) {
+        const iso = fromDayNumber(day);
+        if (!canRead(iso)) return { day, truncated: true };
+        if (this.businessDay(iso)) return { day, truncated: false };
+      }
+      return { day: from + step * 400, truncated: true };
+    };
+    const before = boundary(firstDay - 1, -1);
+    const after = boundary(lastDay + 1, 1);
+    const business: number[] = [];
+    for (let day = firstDay; day <= lastDay; day++)
+      if (this.businessDay(fromDayNumber(day))) business.push(day);
+    // Sentinels: seq[0] and seq[n + 1] are the business days just outside the year.
+    const seq = [before.day, ...business, after.day];
+
+    const candidates: LeaveSuggestion[] = [];
+    for (let k = 1; k <= business.length; k++) {
+      for (let count = 1; count <= maxLeave && k + count - 1 <= business.length; count++) {
+        const start = (seq[k - 1] ?? 0) + 1;
+        const end = (seq[k + count] ?? 0) - 1;
+        const daysOff = end - start + 1;
+        if (daysOff < minDaysOff || daysOff <= count) continue;
+        const holidays = new Map<string, Holiday>();
+        for (let day = start; day <= end; day++) {
+          const iso = fromDayNumber(day);
+          for (const holiday of this.index(yearOf(iso)).byDate.get(iso) ?? [])
+            holidays.set(holiday.id, holiday);
+        }
+        if (requireHoliday && holidays.size === 0) continue;
+        const leaveDates = seq.slice(k, k + count).map(fromDayNumber);
+        candidates.push({
+          startDate: fromDayNumber(start),
+          endDate: fromDayNumber(end),
+          daysOff,
+          leaveDates,
+          leaveDays: count,
+          efficiency: daysOff / count,
+          holidays: [...holidays.values()].sort(compareHolidays),
+          truncated: (k === 1 && before.truncated) || (k + count === seq.length - 1 && after.truncated),
+        });
+      }
+    }
+    candidates.sort(
+      (a, b) =>
+        b.efficiency - a.efficiency ||
+        b.daysOff - a.daysOff ||
+        a.leaveDays - b.leaveDays ||
+        compareISODates(a.startDate, b.startDate),
+    );
+    const chosen: LeaveSuggestion[] = [];
+    for (const candidate of candidates) {
+      if (chosen.length >= limit) break;
+      const overlaps = chosen.some(
+        (other) => candidate.startDate <= other.endDate && candidate.endDate >= other.startDate,
+      );
+      if (!options.allowOverlap && overlaps) continue;
+      chosen.push(candidate);
+    }
+    return deepFreeze(chosen);
+  }
+
+  /**
+   * Month grid for calendar UIs: rows of 7 days (with leading/trailing days of
+   * adjacent months), each classified as weekend / holiday / business day.
+   */
+  getMonthCalendar(year: number, month: number, options: MonthCalendarOptions = {}): MonthCalendar {
+    assertYear(year);
+    assertMonth(month);
+    const weekStartsOn = options.weekStartsOn ?? 0;
+    if (!Number.isInteger(weekStartsOn) || weekStartsOn < 0 || weekStartsOn > 6) {
+      throw new RangeError("weekStartsOn must be an integer 0 (Sunday) to 6 (Saturday)");
+    }
+    const withBengali = options.bengaliDates ?? true;
+    const locale = this.options.locale;
+    const bangla = isBanglaLocale(locale);
+    const firstIso = formatISODate(year, month, 1);
+    const first = toDayNumber(firstIso);
+    const length = daysInMonth(year, month);
+    const lead = (getWeekday(firstIso) - weekStartsOn + 7) % 7;
+    const cells = options.fixedWeeks ? 42 : Math.ceil((lead + length) / 7) * 7;
+    const days: MonthCalendarDay[] = [];
+    let businessDays = 0;
+    for (let index = 0; index < cells; index++) {
+      const dayNumber = first - lead + index;
+      const iso = fromDayNumber(dayNumber);
+      const inMonth = dayNumber >= first && dayNumber < first + length;
+      const weekday = getWeekday(iso);
+      const bengaliDate =
+        withBengali && iso >= BENGALI_CALENDAR_MIN_DATE
+          ? formatBengaliDate(iso, { locale: bangla ? "bn" : "en" })
+          : undefined;
+      const base = {
+        date: iso,
+        day: Number(iso.slice(8, 10)),
+        weekday,
+        inMonth,
+        isWeekend: this.weekendSet.has(weekday),
+        ...(bengaliDate !== undefined ? { bengaliDate } : {}),
+      };
+      if (inMonth) {
+        const info = this.getDayInfo(iso);
+        if (info.isBusinessDay) businessDays++;
+        days.push({
+          ...base,
+          holidays: info.holidays,
+          isHoliday: info.isHoliday,
+          isHalfDay: info.isHalfDay,
+          isBusinessDay: info.isBusinessDay,
+        });
+      } else {
+        days.push({ ...base, holidays: [], isHoliday: false, isHalfDay: false, isBusinessDay: null });
+      }
+    }
+    const weeks: MonthCalendarDay[][] = [];
+    for (let index = 0; index < days.length; index += 7) weeks.push(days.slice(index, index + 7));
+    const weekdays = Array.from({ length: 7 }, (_, offset) => {
+      const weekday = ((weekStartsOn + offset) % 7) as Weekday;
+      return { weekday, name: getWeekdayName(weekday, locale), isWeekend: this.weekendSet.has(weekday) };
+    });
+    return deepFreeze({
+      year,
+      month,
+      monthName: getMonthName(month, locale),
+      locale,
+      weekdays,
+      weeks,
+      businessDays,
+      holidays: this.getHolidays({ year, month }),
+    });
   }
 
   // ---------------------------------------------------------------------------

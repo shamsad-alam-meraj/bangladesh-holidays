@@ -27,8 +27,12 @@ addBusinessDays("2027-03-04", 1); // "2027-03-14" — skips the 9-day Eid break
 - [Core concepts](#core-concepts)
 - [Custom calendars](#custom-calendars)
 - [Working-day calculations](#working-day-calculations)
+- [Leave planner](#leave-planner)
+- [Month calendar for UIs](#month-calendar-for-uis)
 - [Bangla localization](#bangla-localization)
 - [Export](#export)
+- [Calendar feeds](#calendar-feeds)
+- [Command-line tool](#command-line-tool)
 - [Integration examples](#integration-examples)
 - [API reference](#api-reference)
 - [Dataset format and contributing data](#dataset-format-and-contributing-data)
@@ -45,6 +49,10 @@ addBusinessDays("2027-03-04", 1); // "2027-03-14" — skips the 9-day Eid break
 - **Customizable calendars.** Custom, recurring and date-range holidays; organisation datasets; regional holidays; per-community optional holidays; moon-sighting date overrides; and documented precedence rules. Calendars are immutable.
 - **Bangla first.** Bangla names and descriptions, Bangla numerals, notice-style date formatting (`শুক্রবার, ২৬ মার্চ ২০২৭`), and a converter for the revised Bangla calendar that is verified against the official notice.
 - **Export.** JSON, RFC 4180 CSV (Excel-safe, formula-injection guarded) and RFC 5545 iCalendar with reminders. The ICS output is built for Google Calendar, Outlook and Apple Calendar import.
+- **Leave planner.** `suggestLeave(2027)` finds which days to take off for the longest breaks, e.g. one leave day on 4 March gives 10 days off around Eid-ul-Fitr.
+- **Ready for calendar UIs.** `getMonthCalendar(2027, 3)` returns a weeks × days grid with holiday and business-day flags and Bangla dates.
+- **Subscribable calendar feeds.** Free ICS feeds for Google Calendar, Outlook and Apple Calendar that update automatically ([see below](#calendar-feeds)).
+- **Command-line tool.** `npx bangladesh-holidays 2027 --locale bn`, plus business-day maths, leave planning and month calendars in the terminal.
 - **Engineering.** Zero runtime dependencies; ESM + CommonJS + full TypeScript declarations; tree-shakable; timezone-safe date-only arithmetic. 300+ tests at ≈97% statement coverage.
 
 ## Data status
@@ -287,6 +295,56 @@ createHolidayCalendar().rollToBusinessDay("2027-12-16"); // "2027-12-19"
 
 Every function accepts calendar options as its last argument, e.g. `isBusinessDay(date, { weekend: [5], customHolidays: [...] })`. For repeated calls, create a calendar once; it caches per-year indexes.
 
+## Leave planner
+
+Find the business days to take off for the longest breaks around holidays:
+
+```ts
+import { suggestLeave } from "bangladesh-holidays";
+
+suggestLeave(2027, { maxLeaveDays: 2, limit: 3 });
+// [
+//   { leaveDates: ["2027-03-04"], startDate: "2027-03-04", endDate: "2027-03-13", daysOff: 10, leaveDays: 1, efficiency: 10, holidays: [...] },
+//   { leaveDates: ["2027-05-13"], startDate: "2027-05-13", endDate: "2027-05-22", daysOff: 10, leaveDays: 1, efficiency: 10, holidays: [...] },
+//   { leaveDates: ["2027-01-21"], startDate: "2027-01-21", endDate: "2027-01-24", daysOff: 4, ... },
+// ]
+```
+
+Each suggestion takes 1…`maxLeaveDays` (default 3) consecutive business days off and joins them with the weekends and holidays around them. Results are ranked by days off per leave day, and by default don't overlap.
+
+Options:
+
+- `minDaysOff` (default 4)
+- `requireHoliday` (default `true`: the break must include a holiday, not just a weekend)
+- `limit` (default 10)
+- `allowOverlap` (returns alternatives for the same break)
+
+The planner uses the calendar's settings, so custom weekends, company holidays and optional holidays are all respected.
+
+## Month calendar for UIs
+
+`getMonthCalendar` returns everything a calendar widget needs:
+
+```ts
+import { getMonthCalendar } from "bangladesh-holidays";
+
+const march = getMonthCalendar(2027, 3, { locale: "bn", weekStartsOn: 6 });
+march.monthName; // "মার্চ"
+march.weekdays; // [{ weekday: 6, name: "শনিবার", isWeekend: true }, …]
+march.weeks; // rows of 7 days:
+// { date: "2027-03-10", day: 10, inMonth: true, isWeekend: false, isHoliday: true,
+//   isBusinessDay: false, holidays: [...], bengaliDate: "২৫ ফাল্গুন ১৪৩৩" }
+march.businessDays; // 18
+```
+
+Leading and trailing days from adjacent months are included with `inMonth: false` and `isBusinessDay: null`. They never require data for the adjacent year.
+
+Options:
+
+- `weekStartsOn` (default `0`, Sunday)
+- `fixedWeeks: true` (always 6 rows)
+- `bengaliDates: false`
+
 ## Bangla localization
 
 Supported locales: `en`, `en-BD`, `bn`, `bn-BD`.
@@ -314,6 +372,8 @@ toLatinDigits("২০২৭-০৩-২৬"); // "2027-03-26"
 getCategoryLabel("executive-order", "bn"); // "নির্বাহী আদেশে ছুটি"
 
 formatBengaliDate("2027-03-26"); // "১২ চৈত্র ১৪৩৩"
+formatBengaliDate("2027-03-26", { weekday: true, season: true }); // "শুক্রবার, ১২ চৈত্র ১৪৩৩ (বসন্তকাল)"
+toBengaliDate("2027-08-05").seasonBn; // "বর্ষা" (ঋতু: গ্রীষ্ম, বর্ষা, শরৎ, হেমন্ত, শীত, বসন্ত)
 toBengaliDate("2027-04-14"); // { year: 1434, month: 1, day: 1, monthNameBn: "বৈশাখ", formattedEn: "1 Boishakh 1434", … }
 fromBengaliDate(1433, 12, 12); // "2027-03-26"
 ```
@@ -338,6 +398,51 @@ calendar.export("ics", { from: "2027-03-01", to: "2027-05-31", locale: "en" });
 - **ICS** follows RFC 5545: CRLF line endings; 75-octet folding that never splits a Bangla character; all-day `VALUE=DATE` events with an exclusive `DTEND`; stable `UID`s; `CATEGORIES`; `STATUS:TENTATIVE` for moon-dependent dates; and the Outlook all-day/busy-status properties. Import it via Google Calendar → _Settings → Import_, Outlook → _Add calendar → Upload from file_, or open it in Apple Calendar.
 - **CSV** follows RFC 4180. Values starting with `= + - @` get a `'` prefix to block spreadsheet formula injection (`escapeFormulas: false` disables this).
 - `exportHolidays(holidays, format, options)` exports any list of holidays, e.g. a filtered `getHolidays()` result.
+- For subscription feeds, `refreshIntervalHours` adds `REFRESH-INTERVAL`/`X-PUBLISHED-TTL`, and `calendarDescription` sets `X-WR-CALDESC`.
+
+## Calendar feeds
+
+You don't need to write any code to use these. Subscribe once, and the holidays (including moon-sighting changes) update automatically:
+
+| Calendar                              | Feed URL                                                                                  |
+| ------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Government holidays (English)         | `https://shamsad-alam-meraj.github.io/bangladesh-holidays/bangladesh-holidays.ics`        |
+| সরকারি ছুটি (বাংলা)                   | `https://shamsad-alam-meraj.github.io/bangladesh-holidays/bangladesh-holidays-bn.ics`     |
+| All holidays incl. optional (English) | `https://shamsad-alam-meraj.github.io/bangladesh-holidays/bangladesh-holidays-all.ics`    |
+| সকল ছুটি, ঐচ্ছিকসহ (বাংলা)            | `https://shamsad-alam-meraj.github.io/bangladesh-holidays/bangladesh-holidays-all-bn.ics` |
+
+- **Google Calendar:** Settings → Add calendar → From URL → paste a feed URL.
+- **Outlook:** Add calendar → Subscribe from web → paste the URL.
+- **Apple Calendar / iPhone:** File → New Calendar Subscription, or open the [feeds page](https://shamsad-alam-meraj.github.io/bangladesh-holidays/).
+
+The feeds, plus `holidays.json` and `holidays.csv`, are rebuilt from `main` by the [Calendar feeds workflow](.github/workflows/pages.yml) and validated before every deploy. To build them locally, run `npm run build && npm run feeds`; the output goes to `site/`.
+
+## Command-line tool
+
+```sh
+npx bangladesh-holidays 2027                      # list holidays
+npx bangladesh-holidays 2027 --locale bn          # in Bangla
+npx bangladesh-holidays 2027 --optional --region all
+npx bangladesh-holidays 2027 --format ics --out holidays-2027.ics   # also json, csv (--bom for Excel)
+npx bangladesh-holidays check 2027-03-26          # Friday, 26 March 2027: not a business day — Independence and National Day, weekend
+npx bangladesh-holidays add 2027-03-04 5          # business-day arithmetic (negative to subtract)
+npx bangladesh-holidays count 2027-03-01 2027-03-31
+npx bangladesh-holidays next 3                    # upcoming holidays
+npx bangladesh-holidays long-weekends 2027
+npx bangladesh-holidays leave 2027 --max-leave 2  # leave planner
+npx bangladesh-holidays month 2027 3 --locale bn  # month grid
+npx bangladesh-holidays bangla 2027-03-26         # Friday, 12 Choitro 1433 (Boshonto)
+```
+
+Run `npx bangladesh-holidays --help` for every option (`--weekend fri,sat`, `--month`, `--ignore-missing`, …).
+
+Exit codes:
+
+- `0`: success
+- `1`: invalid date or no data for the year (the message lists the available years)
+- `2`: usage error
+
+On Windows PowerShell, use `--out` instead of `>`. PowerShell's redirection can change the file encoding.
 
 ## Integration examples
 
@@ -442,21 +547,23 @@ All dates are ISO strings (`YYYY-MM-DD`) or `Date`s, and all results are frozen.
 
 ### Business days
 
-| Function                                                                                   | Returns                                                                                                                 |
-| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `isBusinessDay(date, options?)` · `isWorkingDay` (alias) · `isWeekend`                     | `boolean`                                                                                                               |
-| `getDayInfo(date, options?)`                                                               | `{ weekday, isWeekend, holidays, observances, isHoliday, isHalfDay, isWorkingDayOverride, isBusinessDay, reason }`      |
-| `addBusinessDays(date, n, options?)` · `subtractBusinessDays(date, n, options?)`           | ISO date                                                                                                                |
-| `getNextBusinessDay(date, options?)` · `getPreviousBusinessDay(date, options?)`            | ISO date (strictly after/before)                                                                                        |
-| `countBusinessDays(start, end, options?)` · `getBusinessDaysBetween(start, end, options?)` | `number` / `string[]` (`includeStart`, `includeEnd`, both default `true`; `start > end` throws)                         |
-| `getWorkingDays(year, month?, options?)` · `getWeekendDays(year, month?, options?)`        | `string[]`                                                                                                              |
-| `getLongWeekends(year, options?)`                                                          | runs of ≥ `minDays` (default 3) non-business days containing a holiday; `truncated: true` if cut at a year without data |
+| Function                                                                                   | Returns                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `isBusinessDay(date, options?)` · `isWorkingDay` (alias) · `isWeekend`                     | `boolean`                                                                                                                                                                       |
+| `getDayInfo(date, options?)`                                                               | `{ weekday, isWeekend, holidays, observances, isHoliday, isHalfDay, isWorkingDayOverride, isBusinessDay, reason }`                                                              |
+| `addBusinessDays(date, n, options?)` · `subtractBusinessDays(date, n, options?)`           | ISO date                                                                                                                                                                        |
+| `getNextBusinessDay(date, options?)` · `getPreviousBusinessDay(date, options?)`            | ISO date (strictly after/before)                                                                                                                                                |
+| `countBusinessDays(start, end, options?)` · `getBusinessDaysBetween(start, end, options?)` | `number` / `string[]` (`includeStart`, `includeEnd`, both default `true`; `start > end` throws)                                                                                 |
+| `getWorkingDays(year, month?, options?)` · `getWeekendDays(year, month?, options?)`        | `string[]`                                                                                                                                                                      |
+| `getLongWeekends(year, options?)`                                                          | runs of ≥ `minDays` (default 3) non-business days containing a holiday; `truncated: true` if cut at a year without data                                                         |
+| `suggestLeave(year, options?)`                                                             | leave plans `{ leaveDates, startDate, endDate, daysOff, leaveDays, efficiency, holidays, truncated }` (`maxLeaveDays`, `minDaysOff`, `requireHoliday`, `limit`, `allowOverlap`) |
+| `getMonthCalendar(year, month, options?)`                                                  | `{ monthName, weekdays, weeks: day[][], businessDays, holidays }` (`weekStartsOn`, `fixedWeeks`, `bengaliDates`)                                                                |
 
 ### `HolidayCalendar` (from `createHolidayCalendar(options)`)
 
 Every function above is also a method, with `year` optional where the calendar has a default `year`. In addition:
 
-- `getCoverage(year?)` · `hasDataFor(year)` · `rollToBusinessDay(date, "forward" | "backward")` · `isHalfDay(date)`
+- `getCoverage(year?)` · `hasDataFor(year)` · `rollToBusinessDay(date, "forward" | "backward")` · `isHalfDay(date)` · `suggestLeave(year?, options?)` · `getMonthCalendar(year, month, options?)`
 - `export(format, options?)`
 - `with(options)` · `setYear` · `setLocale` · `setWeekend` · `addCustomHolidays` · `addRecurringHolidays` · `addWorkingDayOverrides` · `addExcludedDates` · `excludeHolidays` · `overrideHolidayDates` — return new calendars
 - `options` (resolved, frozen) · `getConfig()` (the original input)
@@ -474,7 +581,7 @@ Every function above is also a method, with `year` optional where the calendar h
 
 ### Localization, dates and export
 
-`formatDate`, `formatNumber`, `getMonthName`, `getWeekdayName`, `getCategoryLabel`, `getTypeLabel`, `getDateStatusLabel`, `getCommunityLabel`, `toBanglaDigits`, `toLatinDigits`, `localizeHoliday`, `toBengaliDate`, `fromBengaliDate`, `formatBengaliDate`, `getBengaliMonthLengths`, `toISODate`, `isValidISODate`, `todayInBangladesh`, `isLeapYear`, `addDays`, `getWeekday`, `exportHolidays`, `exportToJson`, `exportToCsv`, `exportToIcs`.
+`formatDate`, `formatNumber`, `getMonthName`, `getWeekdayName`, `getCategoryLabel`, `getTypeLabel`, `getDateStatusLabel`, `getCommunityLabel`, `toBanglaDigits`, `toLatinDigits`, `localizeHoliday`, `toBengaliDate`, `fromBengaliDate`, `formatBengaliDate` (`weekday`, `season` options), `getBengaliMonthLengths`, `BENGALI_SEASONS_BN`/`EN`, `toISODate`, `isValidISODate`, `todayInBangladesh`, `isLeapYear`, `addDays`, `getWeekday`, `exportHolidays`, `exportToJson`, `exportToCsv`, `exportToIcs`.
 
 ### Errors
 
@@ -516,13 +623,13 @@ Holiday data is transcribed from official publications and verified by automated
 - Government 2026 dataset, for historical calculations.
 - 2028 data when announced, plus updates for in-year changes and moon-sighting confirmations.
 - Opt-in education calendars from official sources.
-- A CLI for exporting calendars.
+- Government office hours, including the yearly Ramadan schedule, once officially announced.
 
 ## Contributing
 
 Contributions are welcome — especially data verification. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md); security issues go through [SECURITY.md](SECURITY.md).
 
-The project follows [Semantic Versioning](https://semver.org/). Releases are cut automatically from `main`: [Conventional Commits](https://www.conventionalcommits.org/) feed [release-please](https://github.com/googleapis/release-please), and each version is published through npm trusted publishing with [provenance](https://docs.npmjs.com/generating-provenance-statements) after a maintainer approves it with 2FA (see [RELEASING.md](RELEASING.md) and [CHANGELOG.md](CHANGELOG.md)).
+The project follows [Semantic Versioning](https://semver.org/). Releases are cut automatically from `main`: [Conventional Commits](https://www.conventionalcommits.org/) feed [release-please](https://github.com/googleapis/release-please), and each version is published automatically through npm trusted publishing (no stored tokens) with [provenance](https://docs.npmjs.com/generating-provenance-statements) (see [RELEASING.md](RELEASING.md) and [CHANGELOG.md](CHANGELOG.md)).
 
 ```sh
 npm install
