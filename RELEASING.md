@@ -65,6 +65,22 @@ public until a maintainer approves it with 2FA.
 6. Recommended: protect `main` (_Settings → Branches_) by requiring pull requests and the CI checks
    to pass.
 
+## Troubleshooting
+
+| Symptom (in the Publish workflow log)                                | Cause                                                       | Fix                                                                                                                                                                                                                                             |
+| -------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GitHub Actions is not permitted to create or approve pull requests` | Repository setting                                          | Settings → Actions → General → Workflow permissions → tick _Allow GitHub Actions to create and approve pull requests_ → Save (owner account), or add the `RELEASE_PLEASE_TOKEN` secret. Then re-run.                                            |
+| `E401 Unable to authenticate` at "Stage release on npm"              | No trusted publisher matches this run                       | `npm trust list bangladesh-holidays` must show repository `shamsad-alam-meraj/bangladesh-holidays`, file `publish.yml`, environment `npm`, permission `stage publish`. Revoke wrong entries (`npm trust revoke bangladesh-holidays --id <id>`). |
+| `Tag … does not match package.json version`                          | A tag was created by hand                                   | Delete the wrong tag, or release manually (below).                                                                                                                                                                                              |
+| `… is already published on npm — nothing to do`                      | Re-run of a version that is live                            | Nothing to fix.                                                                                                                                                                                                                                 |
+| CI fails on a release commit                                         | Check the failing step locally with `npm run release:check` | Fix with a `fix:` commit; the next release PR picks it up.                                                                                                                                                                                      |
+
+**Retrying a release:** after fixing the cause, either use **Re-run failed jobs** on the failed run,
+or go to **Actions → Publish → Run workflow** on `main` and enter the tag (for example `v1.0.2`).
+Retries are safe: the job skips versions that are already on npm. A version whose tag points at
+broken code cannot be fixed in place. Ship the fix as the next patch release instead; skipping a
+version number is fine.
+
 ## Manual release (fallback)
 
 If automation is unavailable, run this from an up-to-date `main` with a clean working tree:

@@ -8,7 +8,7 @@ Bangladesh holiday calendar and business-day toolkit for TypeScript and JavaScri
 [![gzipped size](https://deno.bundlejs.com/badge?q=bangladesh-holidays)](https://bundlejs.com/?q=bangladesh-holidays)
 [![types: included](https://img.shields.io/npm/types/bangladesh-holidays)](https://www.npmjs.com/package/bangladesh-holidays)
 [![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)
-[![license: MIT](https://img.shields.io/npm/l/bangladesh-holidays)](LICENSE)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ```ts
 import { getHoliday, isBusinessDay, addBusinessDays } from "bangladesh-holidays";
