@@ -2,13 +2,13 @@
 
 Bangladesh holiday calendar and business-day toolkit for TypeScript and JavaScript — with the **official 2027 government holiday list**, Bangla localization, a revised Bangla (বঙ্গাব্দ) calendar converter, and JSON / CSV / iCalendar export.
 
-[![npm version](https://img.shields.io/npm/v/bangladesh-holidays.svg)](https://www.npmjs.com/package/bangladesh-holidays)
-[![npm downloads](https://img.shields.io/npm/dm/bangladesh-holidays.svg)](https://www.npmjs.com/package/bangladesh-holidays)
+[![npm version](https://img.shields.io/npm/v/bangladesh-holidays)](https://www.npmjs.com/package/bangladesh-holidays)
+[![npm downloads](https://img.shields.io/npm/dm/bangladesh-holidays)](https://www.npmjs.com/package/bangladesh-holidays)
 [![CI](https://github.com/shamsad-alam-meraj/bangladesh-holidays/actions/workflows/ci.yml/badge.svg)](https://github.com/shamsad-alam-meraj/bangladesh-holidays/actions/workflows/ci.yml)
-[![minzipped size](https://img.shields.io/bundlephobia/minzip/bangladesh-holidays)](https://bundlephobia.com/package/bangladesh-holidays)
-[![types: included](https://img.shields.io/npm/types/bangladesh-holidays.svg)](https://www.npmjs.com/package/bangladesh-holidays)
-[![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
-[![license: MIT](https://img.shields.io/npm/l/bangladesh-holidays.svg)](LICENSE)
+[![gzipped size](https://deno.bundlejs.com/badge?q=bangladesh-holidays)](https://bundlejs.com/?q=bangladesh-holidays)
+[![types: included](https://img.shields.io/npm/types/bangladesh-holidays)](https://www.npmjs.com/package/bangladesh-holidays)
+[![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)
+[![license: MIT](https://img.shields.io/npm/l/bangladesh-holidays)](LICENSE)
 
 ```ts
 import { getHoliday, isBusinessDay, addBusinessDays } from "bangladesh-holidays";
