@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The project uses
 [Conventional Commits](https://www.conventionalcommits.org/); do not edit them by hand.
 Dataset versions (e.g. `2027.1.0`) are tracked inside each data file.
 
+## [1.0.2](https://github.com/shamsad-alam-meraj/bangladesh-holidays/compare/v1.0.1...v1.0.2) (2026-11-06)
+
+
+### Bug Fixes
+
+* **release:** exclude generated CHANGELOG from Prettier check ([ce750f7](https://github.com/shamsad-alam-meraj/bangladesh-holidays/commit/ce750f7cae07c224e7c5d3cfc2c02180ea87594c))
+* **release:** exclude generated CHANGELOG from Prettier check ([b3b2b43](https://github.com/shamsad-alam-meraj/bangladesh-holidays/commit/b3b2b43e49405fcca4af16e3928f36fbf0d3b31a))
+
 ## [1.0.1](https://github.com/shamsad-alam-meraj/bangladesh-holidays/compare/v1.0.0...v1.0.1) (2026-11-06)
 
 
