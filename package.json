@@ -1,0 +1,85 @@
+{
+  "name": "bangladesh-holidays",
+  "version": "1.0.0",
+  "description": "Zero-dependency Bangladesh holiday calendar and business-day toolkit with official government data, Bangla localization, and JSON/CSV/ICS export.",
+  "keywords": [
+    "bangladesh",
+    "holidays",
+    "public-holidays",
+    "business-days",
+    "working-days",
+    "calendar",
+    "bangla",
+    "bengali",
+    "bengali-calendar",
+    "ics",
+    "payroll",
+    "hr"
+  ],
+  "license": "MIT",
+  "author": "Md. Shamsad Alam Meraj",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shamsad-alam-meraj/bangladesh-holidays.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shamsad-alam-meraj/bangladesh-holidays/issues"
+  },
+  "homepage": "https://github.com/shamsad-alam-meraj/bangladesh-holidays#readme",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./data/government/*.json": "./src/data/government/*.json",
+    "./data/calendars.json": "./src/data/calendars.json",
+    "./schema/holiday-dataset.schema.json": "./schema/holiday-dataset.schema.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src/data/**/*.json",
+    "schema",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . && prettier --check .",
+    "lint:fix": "eslint . --fix && prettier --write .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "examples": "node scripts/run-examples.mjs",
+    "smoke": "node scripts/smoke-test.mjs",
+    "release:check": "npm run typecheck && npm run lint && npm run test:coverage && npm run build && npm run examples && npm run smoke",
+    "prepublishOnly": "npm run release:check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^5.1.0",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.10",
+    "tsup": "^8.5.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.1.0"
+  }
+}

@@ -1,0 +1,38 @@
+name: Bug report
+description: Something does not work as documented.
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      render: ts
+      placeholder: |
+        import { addBusinessDays } from "bangladesh-holidays";
+        console.log(addBusinessDays("2027-03-04", 1));
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Runtime and time zone
+      placeholder: Node 22.12, TZ=America/New_York / Chrome 140

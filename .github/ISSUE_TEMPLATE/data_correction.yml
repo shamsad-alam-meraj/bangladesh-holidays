@@ -1,0 +1,42 @@
+name: Holiday data correction
+description: A holiday is missing, wrong, or has changed (e.g. after moon sighting or a new notice).
+title: "data: "
+labels: [data]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Holiday data must come from an official source (MoPA notification, Bangladesh Bank circular, etc.).
+        News articles help locate a notice but are not accepted as the source.
+  - type: input
+    id: holiday
+    attributes:
+      label: Holiday id or date
+      placeholder: 2027-eid-ul-fitr / 2027-03-10
+    validations:
+      required: true
+  - type: dropdown
+    id: calendar
+    attributes:
+      label: Calendar
+      options: [government, bank, education, other]
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: What is wrong and what should it be?
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Official source URL
+      description: Link to the notification / circular (PDF or official web page).
+    validations:
+      required: true
+  - type: input
+    id: reference
+    attributes:
+      label: Memo / circular number and date
+      placeholder: 05.00.0000.175.08.0008.25-105, 05 Nov 2026

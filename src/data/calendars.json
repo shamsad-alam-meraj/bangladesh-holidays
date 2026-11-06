@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "calendars": [
+    {
+      "id": "government",
+      "nameEn": "Government of Bangladesh",
+      "nameBn": "বাংলাদেশ সরকার",
+      "authority": "Ministry of Public Administration",
+      "authorityUrl": "https://mopa.gov.bd",
+      "descriptionEn": "Holidays for government and semi-government offices and statutory, autonomous and semi-autonomous bodies: general holidays, executive-order holidays and optional holidays.",
+      "years": {
+        "2027": { "status": "available", "checkedDate": "2026-11-06" }
+      }
+    },
+    {
+      "id": "bank",
+      "nameEn": "Bangladesh Bank (scheduled banks)",
+      "nameBn": "বাংলাদেশ ব্যাংক (তফসিলি ব্যাংক)",
+      "authority": "Bangladesh Bank",
+      "authorityUrl": "https://www.bb.org.bd",
+      "descriptionEn": "Bank holidays published by Bangladesh Bank for scheduled banks.",
+      "years": {
+        "2027": {
+          "status": "unavailable",
+          "checkedDate": "2026-11-06",
+          "checkedSources": ["https://www.bb.org.bd/en/index.php/mediaroom/circular"],
+          "reason": "Bangladesh Bank had not published a 2027 holiday list as of 2026-11-06. (The 2026 list was published on 2025-11-16 as DOS Circular Letter No. 20.) Bank holidays are not inferred from the government list."
+        }
+      }
+    },
+    {
+      "id": "education",
+      "nameEn": "Educational institutions",
+      "nameBn": "শিক্ষা প্রতিষ্ঠান",
+      "authority": "Ministry of Education and individual boards/institutions",
+      "authorityUrl": "https://moedu.gov.bd",
+      "descriptionEn": "Holiday calendars for schools, colleges and universities.",
+      "years": {
+        "2027": {
+          "status": "unavailable",
+          "checkedDate": "2026-11-06",
+          "reason": "Educational holiday calendars are published separately by education authorities and individual institutions. No verified 2027 education calendar is bundled; supply one as a custom dataset."
+        }
+      }
+    }
+  ]
+}

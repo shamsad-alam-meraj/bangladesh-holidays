@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shamsad-alam-meraj/bangladesh-holidays/schema/holiday-dataset.schema.json",
+  "title": "bangladesh-holidays dataset",
+  "description": "A versioned holiday dataset for one calendar and one year. The runtime validator (validateHolidayDataset) additionally checks real calendar dates, date ranges, year consistency, duplicate ids/holidays and source requirements.",
+  "type": "object",
+  "required": ["schemaVersion", "calendar", "year", "version", "status", "lastUpdated", "holidays"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "calendar": {
+      "$ref": "#/$defs/identifier",
+      "description": "Calendar id, e.g. government, bank, education, or a custom id."
+    },
+    "year": { "type": "integer", "minimum": 1, "maximum": 9999 },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$",
+      "description": "Dataset version, e.g. 2027.1.0. Bump on every data change."
+    },
+    "status": {
+      "enum": ["official", "provisional", "custom"],
+      "description": "official: transcribed from an official publication (requires a source). provisional: not yet official. custom: organisation data."
+    },
+    "lastUpdated": { "$ref": "#/$defs/date" },
+    "source": { "$ref": "#/$defs/source" },
+    "notes": { "type": "array", "items": { "type": "string" } },
+    "holidays": { "type": "array", "items": { "$ref": "#/$defs/holiday" } }
+  },
+  "$defs": {
+    "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "identifier": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "nonEmpty": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "required": ["title"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "$ref": "#/$defs/nonEmpty" },
+        "titleEn": { "$ref": "#/$defs/nonEmpty" },
+        "authority": { "$ref": "#/$defs/nonEmpty" },
+        "reference": { "$ref": "#/$defs/nonEmpty" },
+        "referenceBn": { "$ref": "#/$defs/nonEmpty" },
+        "publishedDate": { "$ref": "#/$defs/date" },
+        "url": { "type": "string", "pattern": "^https?://\\S+$" },
+        "documentUrl": { "type": "string", "pattern": "^https?://\\S+$" },
+        "retrievedDate": { "$ref": "#/$defs/date" }
+      }
+    },
+    "holiday": {
+      "type": "object",
+      "required": ["id", "nameEn", "date", "category", "type", "dateStatus"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "nameEn": { "$ref": "#/$defs/nonEmpty" },
+        "nameBn": { "$ref": "#/$defs/nonEmpty" },
+        "date": { "$ref": "#/$defs/date" },
+        "endDate": { "$ref": "#/$defs/date" },
+        "category": {
+          "enum": [
+            "general",
+            "executive-order",
+            "optional",
+            "bank",
+            "observance",
+            "education",
+            "corporate",
+            "custom"
+          ]
+        },
+        "type": {
+          "enum": ["national", "religious", "cultural", "bank", "company", "closure", "observance", "other"]
+        },
+        "dateStatus": {
+          "enum": ["scheduled", "tentative", "confirmed", "estimated"],
+          "description": "tentative = officially announced but subject to moon sighting; estimated = not officially announced."
+        },
+        "dayType": { "enum": ["full", "half"] },
+        "official": { "type": "boolean" },
+        "verification": { "enum": ["verified", "unverified"] },
+        "descriptionEn": { "$ref": "#/$defs/nonEmpty" },
+        "descriptionBn": { "$ref": "#/$defs/nonEmpty" },
+        "source": { "$ref": "#/$defs/source" },
+        "announcementDate": { "$ref": "#/$defs/date" },
+        "regions": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "include": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/nonEmpty" } },
+            "exclude": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/nonEmpty" } }
+          }
+        },
+        "communities": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "enum": ["muslim", "hindu", "christian", "buddhist", "ethnic-minority"] }
+        },
+        "substituteFor": { "$ref": "#/$defs/nonEmpty" },
+        "notice": {
+          "type": "object",
+          "required": ["section", "serial"],
+          "additionalProperties": false,
+          "properties": {
+            "section": { "type": "string" },
+            "serial": { "type": "integer" },
+            "bengaliDates": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/nonEmpty" } }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": { "type": ["string", "number", "boolean", "null"] }
+        }
+      }
+    }
+  }
+}

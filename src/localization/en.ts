@@ -1,0 +1,53 @@
+import type { Community, DateStatus, HolidayCategory, HolidayType } from "../types/holiday";
+
+export const en = {
+  months: [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ],
+  weekdays: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  categories: {
+    general: "General holiday",
+    "executive-order": "Executive-order holiday",
+    optional: "Optional holiday",
+    bank: "Bank holiday",
+    observance: "Observance",
+    education: "Educational holiday",
+    corporate: "Corporate holiday",
+    custom: "Custom holiday",
+  } satisfies Record<HolidayCategory, string>,
+  types: {
+    national: "National",
+    religious: "Religious",
+    cultural: "Cultural",
+    bank: "Bank",
+    company: "Company",
+    closure: "Closure",
+    observance: "Observance",
+    other: "Other",
+  } satisfies Record<HolidayType, string>,
+  dateStatuses: {
+    scheduled: "Scheduled",
+    tentative: "Subject to moon sighting",
+    confirmed: "Confirmed",
+    estimated: "Estimated (not official)",
+  } satisfies Record<DateStatus, string>,
+  communities: {
+    muslim: "Muslim",
+    hindu: "Hindu",
+    christian: "Christian",
+    buddhist: "Buddhist",
+    "ethnic-minority": "Ethnic minority communities",
+  } satisfies Record<Community, string>,
+  halfDay: "Half day",
+} as const;

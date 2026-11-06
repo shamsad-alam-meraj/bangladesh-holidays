@@ -1,0 +1,53 @@
+import type { Community, DateStatus, HolidayCategory, HolidayType } from "../types/holiday";
+
+export const bn = {
+  months: [
+    "জানুয়ারি",
+    "ফেব্রুয়ারি",
+    "মার্চ",
+    "এপ্রিল",
+    "মে",
+    "জুন",
+    "জুলাই",
+    "আগস্ট",
+    "সেপ্টেম্বর",
+    "অক্টোবর",
+    "নভেম্বর",
+    "ডিসেম্বর",
+  ],
+  weekdays: ["রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার"],
+  categories: {
+    general: "সাধারণ ছুটি",
+    "executive-order": "নির্বাহী আদেশে ছুটি",
+    optional: "ঐচ্ছিক ছুটি",
+    bank: "ব্যাংক ছুটি",
+    observance: "পালনীয় দিবস",
+    education: "শিক্ষা প্রতিষ্ঠানের ছুটি",
+    corporate: "প্রাতিষ্ঠানিক ছুটি",
+    custom: "নিজস্ব ছুটি",
+  } satisfies Record<HolidayCategory, string>,
+  types: {
+    national: "জাতীয়",
+    religious: "ধর্মীয়",
+    cultural: "সাংস্কৃতিক",
+    bank: "ব্যাংক",
+    company: "প্রাতিষ্ঠানিক",
+    closure: "বন্ধ",
+    observance: "পালনীয়",
+    other: "অন্যান্য",
+  } satisfies Record<HolidayType, string>,
+  dateStatuses: {
+    scheduled: "নির্ধারিত",
+    tentative: "চাঁদ দেখার উপর নির্ভরশীল",
+    confirmed: "নিশ্চিত",
+    estimated: "আনুমানিক (অনানুষ্ঠানিক)",
+  } satisfies Record<DateStatus, string>,
+  communities: {
+    muslim: "মুসলিম",
+    hindu: "হিন্দু",
+    christian: "খ্রিষ্টান",
+    buddhist: "বৌদ্ধ",
+    "ethnic-minority": "ক্ষুদ্র নৃ-গোষ্ঠী",
+  } satisfies Record<Community, string>,
+  halfDay: "অর্ধদিবস",
+} as const;
