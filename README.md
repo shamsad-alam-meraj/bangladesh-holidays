@@ -2,9 +2,13 @@
 
 Bangladesh holiday calendar and business-day toolkit for TypeScript and JavaScript — with the **official 2027 government holiday list**, Bangla localization, a revised Bangla (বঙ্গাব্দ) calendar converter, and JSON / CSV / iCalendar export.
 
+[![npm version](https://img.shields.io/npm/v/bangladesh-holidays.svg)](https://www.npmjs.com/package/bangladesh-holidays)
+[![npm downloads](https://img.shields.io/npm/dm/bangladesh-holidays.svg)](https://www.npmjs.com/package/bangladesh-holidays)
 [![CI](https://github.com/shamsad-alam-meraj/bangladesh-holidays/actions/workflows/ci.yml/badge.svg)](https://github.com/shamsad-alam-meraj/bangladesh-holidays/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/bangladesh-holidays.svg)](https://www.npmjs.com/package/bangladesh-holidays)
-[![license](https://img.shields.io/npm/l/bangladesh-holidays.svg)](LICENSE)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/bangladesh-holidays)](https://bundlephobia.com/package/bangladesh-holidays)
+[![types: included](https://img.shields.io/npm/types/bangladesh-holidays.svg)](https://www.npmjs.com/package/bangladesh-holidays)
+[![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
+[![license: MIT](https://img.shields.io/npm/l/bangladesh-holidays.svg)](LICENSE)
 
 ```ts
 import { getHoliday, isBusinessDay, addBusinessDays } from "bangladesh-holidays";
@@ -483,7 +487,7 @@ Every function above is also a method, with `year` optional where the calendar h
 
 ## Dataset format and contributing data
 
-Datasets live in [`src/data/`](src/data): one JSON file per calendar per year (`government/2027.json`), plus [`calendars.json`](src/data/calendars.json), which records which years are available or explicitly unavailable. Files follow [`schema/holiday-dataset.schema.json`](schema/holiday-dataset.schema.json), and raw JSON is also exported (`bangladesh-holidays/data/government/2027.json`).
+Datasets live in [`data/`](data): one JSON file per calendar per year (`government/2027.json`), plus [`calendars.json`](data/calendars.json), which records which years are available or explicitly unavailable. Files follow [`schema/holiday-dataset.schema.json`](schema/holiday-dataset.schema.json), and raw JSON is also exported (`bangladesh-holidays/data/government/2027.json`).
 
 To add a year (for example 2028 when it is announced around November 2027):
 
@@ -516,7 +520,9 @@ Holiday data is transcribed from official publications and verified by automated
 
 ## Contributing
 
-Contributions are welcome — especially data verification. Please read [CONTRIBUTING.md](CONTRIBUTING.md); security issues go through [SECURITY.md](SECURITY.md). This project uses [Conventional Commits](https://www.conventionalcommits.org/) and [Semantic Versioning](https://semver.org/); see [CHANGELOG.md](CHANGELOG.md).
+Contributions are welcome — especially data verification. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md); security issues go through [SECURITY.md](SECURITY.md).
+
+The project follows [Semantic Versioning](https://semver.org/). Releases are cut automatically from `main`: [Conventional Commits](https://www.conventionalcommits.org/) feed [release-please](https://github.com/googleapis/release-please), and each version is published through npm trusted publishing with [provenance](https://docs.npmjs.com/generating-provenance-statements) after a maintainer approves it with 2FA (see [RELEASING.md](RELEASING.md) and [CHANGELOG.md](CHANGELOG.md)).
 
 ```sh
 npm install

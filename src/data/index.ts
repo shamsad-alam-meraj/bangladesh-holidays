@@ -1,5 +1,5 @@
-import calendarsJson from "./calendars.json";
-import government2027 from "./government/2027.json";
+import calendarsJson from "../../data/calendars.json";
+import government2027 from "../../data/government/2027.json";
 import { normalizeDataset } from "../core/validation";
 import { deepFreeze } from "../utils/freeze";
 import type { CalendarDefinition, DataCoverage, HolidayDataset } from "../types/dataset";

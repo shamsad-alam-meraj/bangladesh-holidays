@@ -1,42 +1,80 @@
-# Release checklist
+# Releasing
 
-Releases follow [Semantic Versioning](https://semver.org/):
+Releases are automated from the `main` branch with
+[release-please](https://github.com/googleapis/release-please) and npm
+[trusted publishing](https://docs.npmjs.com/trusted-publishers) with **staged publishing**:
+no npm token is stored anywhere, every version carries
+[provenance](https://docs.npmjs.com/generating-provenance-statements), and nothing becomes
+public until a maintainer approves it with 2FA.
 
-- **patch** — bug fixes, data corrections and moon-sighting confirmations within an existing year
-- **minor** — new features, new years' datasets, new calendars
-- **major** — breaking API changes
+## How a release happens
 
-## Steps
+1. Changes are merged into `main` with [Conventional Commit](https://www.conventionalcommits.org/)
+   messages (squash-merge PR titles count). The commit type decides the version bump:
 
-1. [ ] `main` is green in CI.
-2. [ ] Data: every dataset changed since the last release has a bumped `version`, an updated
-       `lastUpdated`, a cited `source`, and verification tests. `calendars.json` coverage is current,
-       including `checkedDate` for unavailable calendars (re-check bb.org.bd for Bangladesh Bank lists).
-3. [ ] Move the **Unreleased** entries in `CHANGELOG.md` under the new version and date.
-4. [ ] Bump the version: `npm version <patch|minor|major> --no-git-tag-version`, then update
-       `src/version.ts` to match (a test enforces this).
-5. [ ] `npm run release:check` passes locally.
-6. [ ] Inspect the package contents: `npm pack --dry-run`.
-7. [ ] Commit `chore(release): vX.Y.Z`, tag `vX.Y.Z`, and push the commit and tag.
-8. [ ] Create a GitHub release from the tag, using the CHANGELOG section as notes. Publishing the
-       release triggers `.github/workflows/release.yml`, which runs the checks and publishes to npm
-       with provenance.
-9. [ ] Verify on npm: `npm view bangladesh-holidays version` and install it in a scratch project.
+   | Commit                                  | Example                                    | Bump  |
+   | --------------------------------------- | ------------------------------------------ | ----- |
+   | `fix:` / `fix(data):`                   | `fix(data): move Eid-ul-Fitr to 11 March`  | patch |
+   | `feat:` / `feat(data):`                 | `feat(data): add 2028 government holidays` | minor |
+   | `feat!:` or a `BREAKING CHANGE:` footer | `feat!: rename getDayInfo().reason values` | major |
+   | `docs:`, `test:`, `ci:`, `chore:`, …    |                                            | none  |
 
-## npm publishing setup (one time)
+2. The **Publish** workflow (`.github/workflows/publish.yml`) keeps a release PR named
+   `chore(release): vX.Y.Z` up to date. It bumps `package.json`, `src/version.ts` and
+   `.release-please-manifest.json`, and writes the `CHANGELOG.md` entry.
+3. Before merging the release PR, check that:
+   - CI is green.
+   - The changelog reads well.
+   - Any dataset changes bumped the dataset `version` and `lastUpdated`, cite a source, and have
+     verification tests.
+   - `data/calendars.json` coverage is current, including `checkedDate`. Re-check
+     [bb.org.bd](https://www.bb.org.bd) for Bangladesh Bank lists.
+4. Merging the release PR creates the `vX.Y.Z` tag and GitHub release. The workflow's
+   **Stage on npm** job then runs every check (`npm run release:check`) and stages the package
+   with `npm stage publish --provenance`.
+5. **Approve the staged version** (requires 2FA), either on npmjs.com under the package's staged
+   versions, or from a terminal:
 
-Either:
+   ```sh
+   npm stage list bangladesh-holidays
+   npm stage approve <stage-id>
+   ```
 
-- **Trusted publishing (recommended):** on npmjs.com → package settings → _Trusted Publisher_, add
-  GitHub Actions with repository `shamsad-alam-meraj/bangladesh-holidays` and workflow `release.yml`.
-  No token is needed.
-- **Token:** create an npm _granular access token_ with publish rights and save it as the
-  `NPM_TOKEN` repository secret.
+   To discard it instead, run `npm stage reject <stage-id>`.
 
-For the very first publish you can also publish manually:
+6. Verify with `npm view bangladesh-holidays version`. The npm page shows the provenance badge.
+
+## One-time setup
+
+1. **npm → package → Settings → Trusted Publisher → GitHub Actions**
+   - Organization or user: `shamsad-alam-meraj`
+   - Repository: `bangladesh-holidays`
+   - Workflow filename: `publish.yml`
+   - Environment name: `npm`
+   - Leave "publish directly" unchecked, so the publisher can only stage.
+2. **npm → package → Settings → Publishing access:** choose _Require two-factor authentication and
+   disallow tokens_.
+3. **GitHub → Settings → Environments → New environment `npm`**
+   - Deployment branches and tags: _Selected branches and tags_ → add `main`.
+   - Optional: add yourself as a required reviewer for an extra approval gate.
+4. **GitHub → Settings → Actions → General → Workflow permissions:** enable _Allow GitHub Actions to
+   create and approve pull requests_ (release-please needs this to open the release PR).
+5. Optional: CI does not run on release PRs opened with the default token. To get CI checks on
+   them, add a fine-grained personal access token (Contents + Pull requests: read/write on this
+   repository) as the `RELEASE_PLEASE_TOKEN` repository secret.
+6. Recommended: protect `main` (_Settings → Branches_) by requiring pull requests and the CI checks
+   to pass.
+
+## Manual release (fallback)
+
+If automation is unavailable, run this from an up-to-date `main` with a clean working tree:
 
 ```sh
+npm version <patch|minor|major> --no-git-tag-version   # then set src/version.ts to match
 npm login
-npm run release:check
-npm publish --access public
+npm publish            # runs `npm run release:check` first via prepublishOnly
+git tag vX.Y.Z && git push origin vX.Y.Z
 ```
+
+Afterwards, update `.release-please-manifest.json` to the new version so release-please continues
+from there.

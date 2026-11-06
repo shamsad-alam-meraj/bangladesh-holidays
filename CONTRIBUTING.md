@@ -11,7 +11,7 @@ Correctness matters more than completeness — people use this library for payro
    notification ([mopa.gov.bd](https://mopa.gov.bd)); bank holidays from Bangladesh Bank circulars
    ([bb.org.bd](https://www.bb.org.bd)). News reports may help you find a notice but are not a source.
 2. **Never invent or estimate dates in an `official` dataset.** If something cannot be verified,
-   leave it out and record the calendar/year as `unavailable` in `src/data/calendars.json`, with a
+   leave it out and record the calendar/year as `unavailable` in `data/calendars.json`, with a
    `reason` and `checkedDate`.
 3. **Keep the notice's structure.** Keep general (সাধারণ) and executive-order (নির্বাহী আদেশে)
    holidays separate. Record the `notice` section, serial and printed Bangla dates. Mark every entry
@@ -23,9 +23,9 @@ Correctness matters more than completeness — people use this library for payro
 
 ### Adding or updating a dataset
 
-1. Create or edit `src/data/<calendar>/<year>.json` (see `schema/holiday-dataset.schema.json`;
+1. Create or edit `data/<calendar>/<year>.json` (see `schema/holiday-dataset.schema.json`;
    editors that understand `$schema` will validate as you type).
-2. Register new files in `src/data/index.ts` and `src/data/calendars.json`.
+2. Register new files in `src/data/index.ts` and `data/calendars.json`.
 3. Add verification tests. For government data, follow `tests/data.test.ts`: transcribe the
    printed weekday of each row and the per-section totals _independently_ from the PDF, and let the
    tests check them against the dataset and the Bangla calendar converter.
@@ -61,11 +61,15 @@ Code guidelines:
 
 ## Commits and pull requests
 
-- Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `data:`,
-  `docs:`, `test:`, `refactor:`, `chore:`, `ci:`. Mark breaking changes with `!` or a
-  `BREAKING CHANGE:` footer.
+- Use [Conventional Commits](https://www.conventionalcommits.org/). Commit messages (or squash-merge
+  PR titles) drive versioning and the changelog through release-please (see
+  [RELEASING.md](RELEASING.md)):
+  - `fix:` → patch release; use `fix(data):` for holiday data corrections
+  - `feat:` → minor release; use `feat(data):` for a new year or calendar
+  - `feat!:` or a `BREAKING CHANGE:` footer → major release
+  - `docs:`, `test:`, `refactor:`, `build:`, `ci:`, `chore:` → no release
 - Keep PRs focused, and fill in the pull request template.
-- Add user-facing changes to `CHANGELOG.md` under **Unreleased**.
+- Don't edit `CHANGELOG.md` or version numbers by hand; release-please generates them.
 
 ## Reporting issues
 
