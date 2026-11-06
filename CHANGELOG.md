@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The project uses
 [Conventional Commits](https://www.conventionalcommits.org/); do not edit them by hand.
 Dataset versions (e.g. `2027.1.0`) are tracked inside each data file.
 
+## [1.1.0](https://github.com/shamsad-alam-meraj/bangladesh-holidays/compare/v1.0.2...v1.1.0) (2026-11-06)
+
+
+### Features
+
+* **cli:** implement command-line interface for Bangladesh holidays ([5e541db](https://github.com/shamsad-alam-meraj/bangladesh-holidays/commit/5e541dbc7d5377f68815a0facb9227d81414438f))
+* **cli:** implement command-line interface for Bangladesh holidays ([bca46d8](https://github.com/shamsad-alam-meraj/bangladesh-holidays/commit/bca46d89f5867d4f3631bdeeed1a679b4dfbc29e))
+
 ## [1.0.2](https://github.com/shamsad-alam-meraj/bangladesh-holidays/compare/v1.0.1...v1.0.2) (2026-11-06)
 
 
