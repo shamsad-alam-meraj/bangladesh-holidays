@@ -46,6 +46,9 @@
     "./schema/holiday-dataset.schema.json": "./schema/holiday-dataset.schema.json",
     "./package.json": "./package.json"
   },
+  "bin": {
+    "bangladesh-holidays": "./dist/cli.js"
+  },
   "files": [
     "dist",
     "data",
@@ -61,7 +64,7 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsup",
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -73,7 +76,8 @@
     "smoke": "node scripts/smoke-test.mjs",
     "release:check": "npm run typecheck && npm run lint && npm run test:coverage && npm run build && npm run lint:package && npm run examples && npm run smoke",
     "prepublishOnly": "npm run release:check",
-    "lint:package": "publint --strict && attw --pack ."
+    "lint:package": "publint --strict && attw --pack .",
+    "feeds": "node scripts/build-feeds.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

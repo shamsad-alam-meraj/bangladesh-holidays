@@ -6,7 +6,14 @@
  */
 import { HolidayCalendar } from "./calendar";
 import { todayInBangladesh, yearOf } from "./date-utils";
-import type { CalendarSummary, DayInfo, HolidayStatistics, LongWeekend } from "../types/calendar";
+import type {
+  CalendarSummary,
+  DayInfo,
+  HolidayStatistics,
+  LeaveSuggestion,
+  LongWeekend,
+  MonthCalendar,
+} from "../types/calendar";
 import type { Holiday, HolidayCategory, HolidayType, ISODateString } from "../types/holiday";
 import type {
   CalendarOptions,
@@ -14,7 +21,9 @@ import type {
   DateRangeOptions,
   HolidayPage,
   HolidayQuery,
+  LeaveSuggestionOptions,
   LongWeekendOptions,
+  MonthCalendarOptions,
   UpcomingHolidayOptions,
 } from "../types/options";
 
@@ -308,4 +317,40 @@ export function getLongWeekends(
 ): readonly LongWeekend[] {
   const { minDays, ...calendarOptions } = options;
   return calendarFor(calendarOptions).getLongWeekends(year, minDays === undefined ? {} : { minDays });
+}
+
+/**
+ * Leave planner: the best business days to take off around holidays.
+ *
+ * ```ts
+ * suggestLeave(2027, { maxLeaveDays: 2 });
+ * // [{ leaveDates: ["2027-03-04"], startDate: "2027-03-04", endDate: "2027-03-13", daysOff: 10, … }, …]
+ * ```
+ */
+export function suggestLeave(
+  year: number,
+  options: LeaveSuggestionOptions & CalendarOptions = {},
+): readonly LeaveSuggestion[] {
+  const { maxLeaveDays, minDaysOff, requireHoliday, limit, allowOverlap, ...calendarOptions } = options;
+  return calendarFor(calendarOptions).suggestLeave(year, {
+    ...(maxLeaveDays !== undefined ? { maxLeaveDays } : {}),
+    ...(minDaysOff !== undefined ? { minDaysOff } : {}),
+    ...(requireHoliday !== undefined ? { requireHoliday } : {}),
+    ...(limit !== undefined ? { limit } : {}),
+    ...(allowOverlap !== undefined ? { allowOverlap } : {}),
+  });
+}
+
+/** Month grid (weeks × days) with holiday and business-day flags, for calendar UIs. */
+export function getMonthCalendar(
+  year: number,
+  month: number,
+  options: MonthCalendarOptions & CalendarOptions = {},
+): MonthCalendar {
+  const { weekStartsOn, bengaliDates, fixedWeeks, ...calendarOptions } = options;
+  return calendarFor(calendarOptions).getMonthCalendar(year, month, {
+    ...(weekStartsOn !== undefined ? { weekStartsOn } : {}),
+    ...(bengaliDates !== undefined ? { bengaliDates } : {}),
+    ...(fixedWeeks !== undefined ? { fixedWeeks } : {}),
+  });
 }

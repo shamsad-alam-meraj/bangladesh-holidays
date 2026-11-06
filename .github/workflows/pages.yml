@@ -1,0 +1,75 @@
+# Publishes the subscribable calendar feeds (ICS/JSON/CSV) to GitHub Pages:
+#   https://shamsad-alam-meraj.github.io/bangladesh-holidays/
+# One-time setup: Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Until Pages is enabled, the build still runs (and validates the feeds) but deployment is
+# skipped with a notice instead of failing.
+name: Calendar feeds
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1" # weekly rebuild (Mondays 03:17 UTC)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build feeds
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+    outputs:
+      pages_enabled: ${{ steps.pages.outcome == 'success' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.x
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Build and validate feeds
+        run: npm run feeds
+      - name: Check that GitHub Pages is enabled
+        id: pages
+        continue-on-error: true
+        uses: actions/configure-pages@v6
+      - name: Upload site
+        if: steps.pages.outcome == 'success'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - name: Explain skipped deployment
+        if: steps.pages.outcome != 'success'
+        run: |
+          {
+            echo "### Calendar feeds built, but not deployed"
+            echo
+            echo "GitHub Pages is not enabled for this repository yet."
+            echo "Enable it once: **Settings → Pages → Build and deployment → Source: GitHub Actions**, then re-run this workflow."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    if: needs.build.outputs.pages_enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

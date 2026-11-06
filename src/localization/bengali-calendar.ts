@@ -11,9 +11,19 @@
  * rather than converted inaccurately. This is not the traditional (West Bengal /
  * panjika) Bangla calendar, whose month lengths follow astronomical observation.
  */
-import { addDays, diffDays, formatISODate, isLeapYear, parseISODate, toISODate } from "../core/date-utils";
+import {
+  addDays,
+  diffDays,
+  formatISODate,
+  getWeekday,
+  isLeapYear,
+  parseISODate,
+  toISODate,
+} from "../core/date-utils";
 import type { DateInput, DateInterpretation } from "../types/options";
 import type { ISODateString } from "../types/holiday";
+import { bn } from "./bn";
+import { en } from "./en";
 import { toBanglaDigits } from "./numerals";
 
 export const BENGALI_MONTHS_BN = [
@@ -65,7 +75,23 @@ export interface BengaliDate {
   readonly formattedBn: string;
   /** e.g. `"12 Choitro 1433"`. */
   readonly formattedEn: string;
+  /** Season (ঋতু), 1 = Grishma … 6 = Boshonto. Each season spans two months. */
+  readonly season: number;
+  /** e.g. `"বসন্ত"`. */
+  readonly seasonBn: string;
+  /** e.g. `"Boshonto"`. */
+  readonly seasonEn: string;
+  /** Day of week of the Gregorian date (0 = Sunday). */
+  readonly weekday: number;
+  /** e.g. `"শুক্রবার"`. */
+  readonly weekdayBn: string;
+  /** e.g. `"Friday"`. */
+  readonly weekdayEn: string;
 }
+
+/** The six seasons (ঋতু): Boishakh–Joishtho = Grishma, …, Falgun–Choitro = Boshonto. */
+export const BENGALI_SEASONS_BN = ["গ্রীষ্ম", "বর্ষা", "শরৎ", "হেমন্ত", "শীত", "বসন্ত"] as const;
+export const BENGALI_SEASONS_EN = ["Grishma", "Borsha", "Shorot", "Hemonto", "Sheet", "Boshonto"] as const;
 
 /** Month lengths for a given Bangla year. */
 export function getBengaliMonthLengths(bengaliYear: number): readonly number[] {
@@ -96,7 +122,7 @@ export function toBengaliDate(
     remaining -= lengths[month] ?? 0;
     month++;
   }
-  return buildBengaliDate(bengaliYear, month + 1, remaining + 1);
+  return buildBengaliDate(iso, bengaliYear, month + 1, remaining + 1);
 }
 
 /** Convert a revised-Bangla-calendar date to an ISO Gregorian date. */
@@ -118,22 +144,41 @@ export function fromBengaliDate(year: number, month: number, day: number): ISODa
 }
 
 /** Format a Gregorian date as a Bangla calendar date, e.g. `"১২ চৈত্র ১৪৩৩"`. */
-export function formatBengaliDate(
-  input: DateInput,
-  options: { locale?: "bn" | "en"; padDay?: boolean } = {},
-): string {
+export interface FormatBengaliDateOptions {
+  readonly locale?: "bn" | "en";
+  /** Zero-pad the day. Default `true`. */
+  readonly padDay?: boolean;
+  /** Prefix the weekday, e.g. "শুক্রবার, ". Default `false`. */
+  readonly weekday?: boolean;
+  /** Append the season, e.g. " (বসন্তকাল)". Default `false`. */
+  readonly season?: boolean;
+}
+
+/**
+ * Format a Gregorian date as a Bangla calendar date.
+ *
+ * `formatBengaliDate("2027-03-26")` → `"১২ চৈত্র ১৪৩৩"`
+ * `formatBengaliDate("2027-03-26", { weekday: true, season: true })` → `"শুক্রবার, ১২ চৈত্র ১৪৩৩ (বসন্তকাল)"`
+ */
+export function formatBengaliDate(input: DateInput, options: FormatBengaliDateOptions = {}): string {
   const date = toBengaliDate(input);
   const pad = options.padDay ?? true;
   const day = pad ? String(date.day).padStart(2, "0") : String(date.day);
-  return options.locale === "en"
+  const english = options.locale === "en";
+  let text = english
     ? `${day} ${date.monthNameEn} ${date.year}`
     : `${toBanglaDigits(day)} ${date.monthNameBn} ${toBanglaDigits(date.year)}`;
+  if (options.weekday) text = `${english ? date.weekdayEn : date.weekdayBn}, ${text}`;
+  if (options.season) text = `${text} (${english ? date.seasonEn : `${date.seasonBn}কাল`})`;
+  return text;
 }
 
-function buildBengaliDate(year: number, month: number, day: number): BengaliDate {
+function buildBengaliDate(iso: ISODateString, year: number, month: number, day: number): BengaliDate {
   const monthNameBn = BENGALI_MONTHS_BN[month - 1] ?? "";
   const monthNameEn = BENGALI_MONTHS_EN[month - 1] ?? "";
   const paddedDay = String(day).padStart(2, "0");
+  const seasonIndex = Math.floor((month - 1) / 2);
+  const weekday = getWeekday(iso);
   return Object.freeze({
     year,
     month,
@@ -142,6 +187,12 @@ function buildBengaliDate(year: number, month: number, day: number): BengaliDate
     monthNameEn,
     formattedBn: `${toBanglaDigits(paddedDay)} ${monthNameBn} ${toBanglaDigits(year)}`,
     formattedEn: `${day} ${monthNameEn} ${year}`,
+    season: seasonIndex + 1,
+    seasonBn: BENGALI_SEASONS_BN[seasonIndex] ?? "",
+    seasonEn: BENGALI_SEASONS_EN[seasonIndex] ?? "",
+    weekday,
+    weekdayBn: bn.weekdays[weekday] ?? "",
+    weekdayEn: en.weekdays[weekday] ?? "",
   });
 }
 
