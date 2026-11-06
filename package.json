@@ -1,6 +1,6 @@
 {
   "name": "bangladesh-holidays",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Zero-dependency Bangladesh holiday calendar and business-day toolkit with official government data, Bangla localization, and JSON/CSV/ICS export.",
   "keywords": [
     "bangladesh",
